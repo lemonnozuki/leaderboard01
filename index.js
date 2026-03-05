@@ -16,6 +16,7 @@ for (const file of fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'))) 
 
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
+  client.user.setPresence({ status: 'dnd' });
 });
 
 client.on('interactionCreate', async interaction => {
