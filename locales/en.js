@@ -29,6 +29,13 @@ module.exports = {
   lang_changed: (e, lang) => `${e.success} Language changed to: **${lang}**`,
   lang_no_perm: (e) => `${e.error} Only admins can change the language`,
 
+  report_sent: (e) => `${e.success} Report sent. Thank you!`,
+  report_embed_title: 'New Bug Report',
+  report_embed_from: 'From',
+  report_embed_server: 'Server',
+  report_embed_desc: 'Description',
+  report_no_channel: (e) => `${e.error} Report channel is not configured.`,
+
   error_occurred: 'An error occurred.',
   error_contact: (owner) => `Contact ${owner} and provide the Error ID for support.`,
 };
