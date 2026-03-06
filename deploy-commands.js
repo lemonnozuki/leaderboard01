@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -10,7 +11,12 @@ const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 for (const file of fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'))) {
   const command = require(path.join(commandsPath, file));
-  if (command.data) commands.push(command.data.toJSON());
+  if (command.data) {
+    commands.push(command.data.toJSON());
+    console.log(`Loaded: ${file} — OK`);
+  } else {
+    console.log(`Skipped: ${file} — no data`);
+  }
 }
 
 const rest = new REST().setToken(TOKEN);
