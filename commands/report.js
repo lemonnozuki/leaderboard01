@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
 const { emoji, ownerId } = require('../config');
 
 module.exports = {
@@ -14,27 +14,45 @@ module.exports = {
   async execute(interaction) {
     const e = emoji;
     const description = interaction.options.getString('description');
+    const ts = Math.floor(Date.now() / 1000);
 
     if (!ownerId) {
       return interaction.reply({ content: `${e.error} Report channel is not configured.`, flags: MessageFlags.Ephemeral });
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(0xff4444)
-      .setTitle('<:bug:1479429638735270059> New Bug Report!')
-      .addFields(
-        { name: '<:user:1479429927152652308> From', value: `${interaction.user.tag}\n\`${interaction.user.id}\``, inline: true },
-        { name: '<:home:1479430251141398580> Server', value: `${interaction.guild.name}\n\`${interaction.guild.id}\``, inline: true },
-        { name: '<:description:1479430474387689522> Description', value: description }
-      )
-      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-      .setTimestamp();
-
     try {
       const owner = await interaction.client.users.fetch(ownerId);
-      await owner.send({ embeds: [embed] });
 
-      const container = new ContainerBuilder()
+      const dmContainer = new ContainerBuilder()
+        .setAccentColor(0xff4444)
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent('### <:bug:1479429638735270059> New Bug Report!')
+        )
+        .addSeparatorComponents(
+          new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true)
+        )
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(`<:user:1479429927152652308> **From:** ${interaction.user.tag} \`${interaction.user.id}\`\n<:home:1479430251141398580> **Server:** ${interaction.guild.name} \`${interaction.guild.id}\``)
+        )
+        .addSeparatorComponents(
+          new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true)
+        )
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(`<:description:1479430474387689522> **Description:**\n> ${description}`)
+        )
+        .addSeparatorComponents(
+          new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true)
+        )
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(`-# <:time:1479431034004312104> Received at <t:${ts}:f>`)
+        );
+
+      await owner.send({
+        components: [dmContainer],
+        flags: MessageFlags.IsComponentsV2
+      });
+
+      const replyContainer = new ContainerBuilder()
         .setAccentColor(0x57f287)
         .addTextDisplayComponents(
           new TextDisplayBuilder().setContent(`### ${e.success} Report Sent!`)
@@ -49,11 +67,11 @@ module.exports = {
           new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true)
         )
         .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(`-# <:time:1479431034004312104> Sent at <t:${Math.floor(Date.now() / 1000)}:f>`)
+          new TextDisplayBuilder().setContent(`-# <:time:1479431034004312104> Sent at <t:${ts}:f>`)
         );
 
       return interaction.reply({
-        components: [container],
+        components: [replyContainer],
         flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
       });
     } catch {

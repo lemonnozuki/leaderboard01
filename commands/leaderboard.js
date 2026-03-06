@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../database');
-const { emoji, ownerId } = require('../config');
+const { emoji } = require('../config');
 const { handleError } = require('../utils/error');
 
 const fmt = (n) => Number.isInteger(n) ? n : parseFloat(n.toFixed(2));
@@ -56,11 +56,6 @@ module.exports = {
       .setDescription('Check rank of yourself or another user')
       .addStringOption(opt => opt.setName('name').setDescription('Leaderboard name').setRequired(true).setAutocomplete(true))
       .addUserOption(opt => opt.setName('user').setDescription('User (leave empty = yourself)'))
-    )
-    .addSubcommand(sub => sub
-      .setName('report')
-      .setDescription('Report a bug or issue to the bot owner')
-      .addStringOption(opt => opt.setName('description').setDescription('Describe the issue').setRequired(true))
     ),
 
   async autocomplete(interaction) {
@@ -92,32 +87,6 @@ module.exports = {
     };
 
     try {
-      if (sub === 'report') {
-        const description = interaction.options.getString('description');
-
-        if (!ownerId) {
-          return interaction.reply({ content: `${e.error} Report channel is not configured.`, ...ep });
-        }
-
-        const embed = new EmbedBuilder()
-          .setColor(0xff4444)
-          .setTitle('New Bug Report')
-          .addFields(
-            { name: 'From', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
-            { name: 'Server', value: `${interaction.guild.name} (${interaction.guild.id})`, inline: true },
-            { name: 'Description', value: description }
-          )
-          .setTimestamp();
-
-        try {
-          const owner = await interaction.client.users.fetch(ownerId);
-          await owner.send({ embeds: [embed] });
-          return interaction.reply({ content: `${e.success} Report sent. Thank you!`, ...ep });
-        } catch {
-          return interaction.reply({ content: `${e.error} Failed to send report.`, ...ep });
-        }
-      }
-
       if (sub === 'create') {
         const name = interaction.options.getString('name');
         const description = interaction.options.getString('description') || null;
