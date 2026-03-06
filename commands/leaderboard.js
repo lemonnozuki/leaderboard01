@@ -1,6 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../database');
-const { emoji } = require('../config');
+const { emoji, ownerId } = require('../config');
 const { handleError } = require('../utils/error');
 
 const getT = (guildId) => {
@@ -9,6 +9,8 @@ const getT = (guildId) => {
 };
 
 const fmt = (n) => Number.isInteger(n) ? n : parseFloat(n.toFixed(2));
+
+const ephemeral = { flags: MessageFlags.Ephemeral };
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -73,6 +75,11 @@ module.exports = {
           { name: 'English', value: 'en' }
         )
       )
+    )
+    .addSubcommand(sub => sub
+      .setName('report')
+      .setDescription('Report a bug or issue to the bot owner')
+      .addStringOption(opt => opt.setName('description').setDescription('Describe the issue').setRequired(true))
     ),
 
   async autocomplete(interaction) {
@@ -98,7 +105,7 @@ module.exports = {
     const requireBoard = (name) => {
       const board = db.getBoard(guildId, name);
       if (!board) {
-        interaction.reply({ content: t.board_not_found(e, name), ephemeral: true });
+        interaction.reply({ content: t.board_not_found(e, name), ...ephemeral });
         return null;
       }
       return board;
@@ -108,12 +115,38 @@ module.exports = {
       if (sub === 'lang') {
         const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.ManageGuild);
         if (!isAdmin) {
-          return interaction.reply({ content: t.lang_no_perm(e), ephemeral: true });
+          return interaction.reply({ content: t.lang_no_perm(e), ...ephemeral });
         }
         const lang = interaction.options.getString('language');
         db.setGuildLang(guildId, lang);
         const newT = require(`../locales/${lang}`);
-        return interaction.reply({ content: newT.lang_changed(e, lang), ephemeral: true });
+        return interaction.reply({ content: newT.lang_changed(e, lang), ...ephemeral });
+      }
+
+      if (sub === 'report') {
+        const description = interaction.options.getString('description');
+
+        if (!ownerId) {
+          return interaction.reply({ content: t.report_no_channel(e), ...ephemeral });
+        }
+
+        const embed = new EmbedBuilder()
+          .setColor(0xff4444)
+          .setTitle(t.report_embed_title)
+          .addFields(
+            { name: t.report_embed_from, value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+            { name: t.report_embed_server, value: `${interaction.guild.name} (${interaction.guild.id})`, inline: true },
+            { name: t.report_embed_desc, value: description }
+          )
+          .setTimestamp();
+
+        try {
+          const owner = await interaction.client.users.fetch(ownerId);
+          await owner.send({ embeds: [embed] });
+          return interaction.reply({ content: t.report_sent(e), ...ephemeral });
+        } catch {
+          return interaction.reply({ content: t.report_no_channel(e), ...ephemeral });
+        }
       }
 
       if (sub === 'create') {
@@ -121,7 +154,7 @@ module.exports = {
         const description = interaction.options.getString('description') || null;
 
         if (name.length > 32) {
-          return interaction.reply({ content: t.board_name_too_long(e), ephemeral: true });
+          return interaction.reply({ content: t.board_name_too_long(e), ...ephemeral });
         }
 
         try {
@@ -135,9 +168,9 @@ module.exports = {
             )
             .setFooter({ text: t.embed_footer_created(interaction.user.tag) })
             .setTimestamp();
-          return interaction.reply({ embeds: [embed] });
+          return interaction.reply({ embeds: [embed], ...ephemeral });
         } catch {
-          return interaction.reply({ content: t.board_exists(e, name), ephemeral: true });
+          return interaction.reply({ content: t.board_exists(e, name), ...ephemeral });
         }
       }
 
@@ -148,17 +181,17 @@ module.exports = {
 
         const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.ManageGuild);
         if (board.created_by !== interaction.user.id && !isAdmin) {
-          return interaction.reply({ content: t.board_delete_no_perm(e), ephemeral: true });
+          return interaction.reply({ content: t.board_delete_no_perm(e), ...ephemeral });
         }
 
         db.deleteBoard(guildId, name);
-        return interaction.reply({ content: t.board_deleted(e, name) });
+        return interaction.reply({ content: t.board_deleted(e, name), ...ephemeral });
       }
 
       if (sub === 'list') {
         const boards = db.listBoards(guildId);
         if (!boards.length) {
-          return interaction.reply({ content: t.board_no_list(e), ephemeral: true });
+          return interaction.reply({ content: t.board_no_list(e), ...ephemeral });
         }
 
         const embed = new EmbedBuilder()
@@ -167,7 +200,7 @@ module.exports = {
           .setDescription(boards.map((b, i) => `**${i + 1}.** ${b.name}${b.description ? ` - ${b.description}` : ''}`).join('\n'))
           .setFooter({ text: t.embed_list_footer(boards.length) })
           .setTimestamp();
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply({ embeds: [embed], ...ephemeral });
       }
 
       if (sub === 'view') {
@@ -191,7 +224,7 @@ module.exports = {
           } catch {
             username = `<@${entry.user_id}>`;
           }
-          return `**${i + 1}.** ${username} - \`${fmt(entry.score)}\``;
+          return `**${i + 1}.** ${username} — \`${fmt(entry.score)}\``;
         }));
 
         const embed = new EmbedBuilder()
@@ -215,7 +248,8 @@ module.exports = {
         const result = db.getUserRank(board.id, user.id);
 
         return interaction.reply({
-          content: t.score_added(e, amount, user, name, fmt(result.score), result.rank)
+          content: t.score_added(e, amount, user, name, fmt(result.score), result.rank),
+          ...ephemeral
         });
       }
 
@@ -230,7 +264,8 @@ module.exports = {
         const result = db.getUserRank(board.id, user.id);
 
         return interaction.reply({
-          content: t.score_set(e, user, fmt(score), name, result.rank)
+          content: t.score_set(e, user, fmt(score), name, result.rank),
+          ...ephemeral
         });
       }
 
@@ -241,7 +276,7 @@ module.exports = {
         if (!board) return;
 
         db.removeEntry(board.id, user.id);
-        return interaction.reply({ content: t.score_removed(e, user, name) });
+        return interaction.reply({ content: t.score_removed(e, user, name), ...ephemeral });
       }
 
       if (sub === 'rank') {
@@ -252,11 +287,12 @@ module.exports = {
 
         const result = db.getUserRank(board.id, target.id);
         if (!result) {
-          return interaction.reply({ content: t.score_no_entry(e, target, name), ephemeral: true });
+          return interaction.reply({ content: t.score_no_entry(e, target, name), ...ephemeral });
         }
 
         return interaction.reply({
-          content: t.rank_display(e, target.username, name, result.rank, fmt(result.score))
+          content: t.rank_display(e, target.username, name, result.rank, fmt(result.score)),
+          ...ephemeral
         });
       }
     } catch (err) {
