@@ -3,14 +3,8 @@ const db = require('../database');
 const { emoji, ownerId } = require('../config');
 const { handleError } = require('../utils/error');
 
-const getT = (guildId) => {
-  const lang = db.getGuildLang(guildId);
-  return require(`../locales/${lang}`);
-};
-
 const fmt = (n) => Number.isInteger(n) ? n : parseFloat(n.toFixed(2));
-
-const ephemeral = { flags: MessageFlags.Ephemeral };
+const ep = { flags: MessageFlags.Ephemeral };
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,7 +14,7 @@ module.exports = {
       .setName('create')
       .setDescription('Create a new leaderboard')
       .addStringOption(opt => opt.setName('name').setDescription('Leaderboard name').setRequired(true))
-      .addStringOption(opt => opt.setName('description').setDescription('Description').setRequired(false))
+      .addStringOption(opt => opt.setName('description').setDescription('Description'))
     )
     .addSubcommand(sub => sub
       .setName('delete')
@@ -35,7 +29,7 @@ module.exports = {
       .setName('view')
       .setDescription('View a leaderboard')
       .addStringOption(opt => opt.setName('name').setDescription('Leaderboard name').setRequired(true).setAutocomplete(true))
-      .addIntegerOption(opt => opt.setName('top').setDescription('How many entries (default 10)').setMinValue(1).setMaxValue(25))
+      .addIntegerOption(opt => opt.setName('top').setDescription('How many entries to show (default 10)').setMinValue(1).setMaxValue(25))
     )
     .addSubcommand(sub => sub
       .setName('add')
@@ -46,7 +40,7 @@ module.exports = {
     )
     .addSubcommand(sub => sub
       .setName('set')
-      .setDescription('Set a user score')
+      .setDescription('Set a user\'s score')
       .addStringOption(opt => opt.setName('name').setDescription('Leaderboard name').setRequired(true).setAutocomplete(true))
       .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(true))
       .addNumberOption(opt => opt.setName('score').setDescription('New score').setRequired(true))
@@ -62,19 +56,6 @@ module.exports = {
       .setDescription('Check rank of yourself or another user')
       .addStringOption(opt => opt.setName('name').setDescription('Leaderboard name').setRequired(true).setAutocomplete(true))
       .addUserOption(opt => opt.setName('user').setDescription('User (leave empty = yourself)'))
-    )
-    .addSubcommand(sub => sub
-      .setName('lang')
-      .setDescription('Set bot language for this server')
-      .addStringOption(opt => opt
-        .setName('language')
-        .setDescription('Language')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Tieng Viet', value: 'vi' },
-          { name: 'English', value: 'en' }
-        )
-      )
     )
     .addSubcommand(sub => sub
       .setName('report')
@@ -99,53 +80,41 @@ module.exports = {
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guildId;
-    const t = getT(guildId);
     const e = emoji;
 
     const requireBoard = (name) => {
       const board = db.getBoard(guildId, name);
       if (!board) {
-        interaction.reply({ content: t.board_not_found(e, name), ...ephemeral });
+        interaction.reply({ content: `${e.error} Leaderboard **${name}** not found.`, ...ep });
         return null;
       }
       return board;
     };
 
     try {
-      if (sub === 'lang') {
-        const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.ManageGuild);
-        if (!isAdmin) {
-          return interaction.reply({ content: t.lang_no_perm(e), ...ephemeral });
-        }
-        const lang = interaction.options.getString('language');
-        db.setGuildLang(guildId, lang);
-        const newT = require(`../locales/${lang}`);
-        return interaction.reply({ content: newT.lang_changed(e, lang), ...ephemeral });
-      }
-
       if (sub === 'report') {
         const description = interaction.options.getString('description');
 
         if (!ownerId) {
-          return interaction.reply({ content: t.report_no_channel(e), ...ephemeral });
+          return interaction.reply({ content: `${e.error} Report channel is not configured.`, ...ep });
         }
 
         const embed = new EmbedBuilder()
           .setColor(0xff4444)
-          .setTitle(t.report_embed_title)
+          .setTitle('New Bug Report')
           .addFields(
-            { name: t.report_embed_from, value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
-            { name: t.report_embed_server, value: `${interaction.guild.name} (${interaction.guild.id})`, inline: true },
-            { name: t.report_embed_desc, value: description }
+            { name: 'From', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+            { name: 'Server', value: `${interaction.guild.name} (${interaction.guild.id})`, inline: true },
+            { name: 'Description', value: description }
           )
           .setTimestamp();
 
         try {
           const owner = await interaction.client.users.fetch(ownerId);
           await owner.send({ embeds: [embed] });
-          return interaction.reply({ content: t.report_sent(e), ...ephemeral });
+          return interaction.reply({ content: `${e.success} Report sent. Thank you!`, ...ep });
         } catch {
-          return interaction.reply({ content: t.report_no_channel(e), ...ephemeral });
+          return interaction.reply({ content: `${e.error} Failed to send report.`, ...ep });
         }
       }
 
@@ -154,23 +123,23 @@ module.exports = {
         const description = interaction.options.getString('description') || null;
 
         if (name.length > 32) {
-          return interaction.reply({ content: t.board_name_too_long(e), ...ephemeral });
+          return interaction.reply({ content: `${e.error} Leaderboard name must be 32 characters or less.`, ...ep });
         }
 
         try {
           db.createBoard(guildId, name, description, interaction.user.id);
           const embed = new EmbedBuilder()
             .setColor(0x5865F2)
-            .setTitle(t.embed_created_title)
+            .setTitle('Leaderboard Created')
             .addFields(
-              { name: t.embed_field_name, value: name.toLowerCase(), inline: true },
-              { name: t.embed_field_desc, value: description || t.embed_field_none, inline: true }
+              { name: 'Name', value: name.toLowerCase(), inline: true },
+              { name: 'Description', value: description || 'None', inline: true }
             )
-            .setFooter({ text: t.embed_footer_created(interaction.user.tag) })
+            .setFooter({ text: `Created by ${interaction.user.tag}` })
             .setTimestamp();
-          return interaction.reply({ embeds: [embed], ...ephemeral });
+          return interaction.reply({ embeds: [embed], ...ep });
         } catch {
-          return interaction.reply({ content: t.board_exists(e, name), ...ephemeral });
+          return interaction.reply({ content: `${e.error} Leaderboard **${name}** already exists.`, ...ep });
         }
       }
 
@@ -181,26 +150,26 @@ module.exports = {
 
         const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.ManageGuild);
         if (board.created_by !== interaction.user.id && !isAdmin) {
-          return interaction.reply({ content: t.board_delete_no_perm(e), ...ephemeral });
+          return interaction.reply({ content: `${e.error} Only the creator or an admin can delete this leaderboard.`, ...ep });
         }
 
         db.deleteBoard(guildId, name);
-        return interaction.reply({ content: t.board_deleted(e, name), ...ephemeral });
+        return interaction.reply({ content: `${e.remove} Leaderboard **${name}** has been deleted.`, ...ep });
       }
 
       if (sub === 'list') {
         const boards = db.listBoards(guildId);
         if (!boards.length) {
-          return interaction.reply({ content: t.board_no_list(e), ...ephemeral });
+          return interaction.reply({ content: `${e.list} This server has no leaderboards.`, ...ep });
         }
 
         const embed = new EmbedBuilder()
           .setColor(0x5865F2)
-          .setTitle(t.embed_list_title)
-          .setDescription(boards.map((b, i) => `**${i + 1}.** ${b.name}${b.description ? ` - ${b.description}` : ''}`).join('\n'))
-          .setFooter({ text: t.embed_list_footer(boards.length) })
+          .setTitle('Leaderboard List')
+          .setDescription(boards.map((b, i) => `**${i + 1}.** ${b.name}${b.description ? ` — ${b.description}` : ''}`).join('\n'))
+          .setFooter({ text: `${boards.length} leaderboard(s)` })
           .setTimestamp();
-        return interaction.reply({ embeds: [embed], ...ephemeral });
+        return interaction.reply({ embeds: [embed], ...ep });
       }
 
       if (sub === 'view') {
@@ -213,7 +182,7 @@ module.exports = {
 
         const entries = db.getTop(board.id, top);
         if (!entries.length) {
-          return interaction.editReply(t.board_empty(e, name));
+          return interaction.editReply(`${e.board} Leaderboard **${name}** has no entries.`);
         }
 
         const lines = await Promise.all(entries.map(async (entry, i) => {
@@ -248,8 +217,8 @@ module.exports = {
         const result = db.getUserRank(board.id, user.id);
 
         return interaction.reply({
-          content: t.score_added(e, amount, user, name, fmt(result.score), result.rank),
-          ...ephemeral
+          content: `${e.add} Added **${amount}** points to ${user} in **${name}**\n${e.score} Score: \`${fmt(result.score)}\` ${e.rank} Rank: **#${result.rank}**`,
+          ...ep
         });
       }
 
@@ -264,8 +233,8 @@ module.exports = {
         const result = db.getUserRank(board.id, user.id);
 
         return interaction.reply({
-          content: t.score_set(e, user, fmt(score), name, result.rank),
-          ...ephemeral
+          content: `${e.success} Set score of ${user} to \`${fmt(score)}\` in **${name}** ${e.rank} Rank: **#${result.rank}**`,
+          ...ep
         });
       }
 
@@ -276,7 +245,7 @@ module.exports = {
         if (!board) return;
 
         db.removeEntry(board.id, user.id);
-        return interaction.reply({ content: t.score_removed(e, user, name), ...ephemeral });
+        return interaction.reply({ content: `${e.remove} Removed ${user} from leaderboard **${name}**.`, ...ep });
       }
 
       if (sub === 'rank') {
@@ -287,16 +256,16 @@ module.exports = {
 
         const result = db.getUserRank(board.id, target.id);
         if (!result) {
-          return interaction.reply({ content: t.score_no_entry(e, target, name), ...ephemeral });
+          return interaction.reply({ content: `${e.error} ${target} has no score in **${name}**.`, ...ep });
         }
 
         return interaction.reply({
-          content: t.rank_display(e, target.username, name, result.rank, fmt(result.score)),
-          ...ephemeral
+          content: `${e.rank} **${target.username}** in **${name}**: Rank **#${result.rank}** with \`${fmt(result.score)}\` points`,
+          ...ep
         });
       }
     } catch (err) {
-      await handleError(interaction, err, t);
+      await handleError(interaction, err);
     }
   }
 };

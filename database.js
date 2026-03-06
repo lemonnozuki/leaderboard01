@@ -21,11 +21,6 @@ db.exec(`
     FOREIGN KEY(board_id) REFERENCES boards(id) ON DELETE CASCADE,
     UNIQUE(board_id, user_id)
   );
-
-  CREATE TABLE IF NOT EXISTS guild_settings (
-    guild_id TEXT PRIMARY KEY,
-    lang TEXT DEFAULT 'vi'
-  );
 `);
 
 module.exports = {
@@ -88,16 +83,4 @@ module.exports = {
 
     return entry ? { rank: rank.rank, score: entry.score } : null;
   },
-
-  getGuildLang(guildId) {
-    const row = db.prepare('SELECT lang FROM guild_settings WHERE guild_id = ?').get(guildId);
-    return row ? row.lang : 'vi';
-  },
-
-  setGuildLang(guildId, lang) {
-    db.prepare(`
-      INSERT INTO guild_settings (guild_id, lang) VALUES (?, ?)
-      ON CONFLICT(guild_id) DO UPDATE SET lang = ?
-    `).run(guildId, lang, lang);
-  }
 };

@@ -1,16 +1,16 @@
 require('dotenv').config();
 
-module.exports = {
-  ownerId: process.env.OWNER_ID || '',
-
-  emoji: {
-    success: process.env.EMOJI_SUCCESS || '<:success:0>',
-    error: process.env.EMOJI_ERROR || '<:error:0>',
-    rank: process.env.EMOJI_RANK || '<:rank:0>',
-    score: process.env.EMOJI_SCORE || '<:score:0>',
-    board: process.env.EMOJI_BOARD || '<:board:0>',
-    add: process.env.EMOJI_ADD || '<:add:0>',
-    remove: process.env.EMOJI_REMOVE || '<:remove:0>',
-    list: process.env.EMOJI_LIST || '<:list:0>',
-  }
+const emoji = {
+  success: '<a:succes:1479107788952047777>',
+  error: '<:wrong:1479107957999538348>',
+  rank: '<:rank:1479108243157553272>',
+  score: '<:score:1479108677683118172>',
+  board: '<:board:1479111789143654400>',
+  add: '<:add:1479111373958152263>',
+  remove: '<:remove:1479111731362926673>',
+  list: '<:list:1479112114617450710>',
 };
+
+const ownerId = process.env.OWNER_ID || '';
+
+module.exports = { emoji, ownerId };
