@@ -31,6 +31,16 @@ module.exports = {
       .addNumberOption(opt => opt.setName('price').setDescription('Price').setRequired(true))
       .addStringOption(opt => opt.setName('description').setDescription('Item description'))
       .addStringOption(opt => opt.setName('emoji').setDescription('Custom emoji for the item'))
+      .addStringOption(opt => opt.setName('duration').setDescription('Duration').addChoices(
+        { name: '1 Day', value: '1d' },
+        { name: '3 Days', value: '3d' },
+        { name: '7 Days', value: '7d' },
+        { name: '30 Days', value: '30d' },
+        { name: '90 Days', value: '90d' },
+        { name: '180 Days', value: '180d' },
+        { name: '365 Days', value: '365d' },
+        { name: 'Permanent', value: 'permanent' }
+      ))
       .addIntegerOption(opt => opt.setName('stock').setDescription('Stock (-1 = unlimited)').setMinValue(-1))
     )
     .addSubcommand(sub => sub
@@ -87,8 +97,9 @@ module.exports = {
       const description = interaction.options.getString('description') || '';
       const itemEmoji = interaction.options.getString('emoji') || '🛍️';
       const stock = interaction.options.getInteger('stock') ?? -1;
+      const duration = interaction.options.getString('duration') || null;
 
-      const result = db.addShopItem(guildId, name, description, itemEmoji, price, stock);
+      const result = db.addShopItem(guildId, name, description, itemEmoji, price, stock, duration);
       const settings = db.getShopSettings(guildId);
       const currency = settings?.currency || 'VND';
 
@@ -98,6 +109,7 @@ module.exports = {
           `### ${e.success} Item Added\n` +
           `${itemEmoji} **${name}**\n` +
           `💰 **Price:** ${price.toLocaleString()} ${currency}\n` +
+          (duration ? `⏱️ **Duration:** ${formatDuration(duration)}\n` : '') +
           (description ? `📝 **Desc:** ${description}\n` : '') +
           `📦 **Stock:** ${stock === -1 ? 'Unlimited' : stock}\n` +
           `🆔 **ID:** \`${result.lastInsertRowid}\``
@@ -142,9 +154,11 @@ module.exports = {
         const row = new ContainerBuilder()
           .setAccentColor(0x5865f2)
           .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-            `${item.emoji} **${item.name}** — \`#${item.id}\`\n` +
+            `${item.emoji} **${item.name}**\n` +
             (item.description ? `${item.description}\n` : '') +
-            `💰 **${item.price.toLocaleString()} ${currency}** • 📦 ${stockText}`
+            `💰 **${item.price.toLocaleString()} ${currency}**` +
+            (item.duration ? ` • ⏱️ ${formatDuration(item.duration)}` : '') +
+            `\n📦 ${stockText}`
           ))
           .addActionRowComponents(
             new ActionRowBuilder().addComponents(
@@ -163,7 +177,7 @@ module.exports = {
         components.push(row);
       }
 
-      return interaction.reply({ components, flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
+      return interaction.reply({ components, flags: MessageFlags.IsComponentsV2 });
     }
 
     if (sub === 'orders') {
@@ -434,3 +448,12 @@ module.exports = {
     }
   }
 };
+
+function formatDuration(d) {
+  const map = {
+    '1d': '1 Day', '3d': '3 Days', '7d': '7 Days',
+    '30d': '30 Days', '90d': '90 Days', '180d': '180 Days',
+    '365d': '365 Days', 'permanent': 'Permanent'
+  };
+  return map[d] || d;
+}

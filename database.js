@@ -61,6 +61,7 @@ db.exec(`
     description TEXT,
     emoji TEXT,
     price REAL NOT NULL,
+    duration TEXT DEFAULT NULL,
     stock INTEGER DEFAULT -1,
     created_at INTEGER DEFAULT (strftime('%s','now'))
   );
@@ -185,10 +186,10 @@ module.exports = {
       ON CONFLICT(guild_id) DO UPDATE SET currency = ?, payment_qr = ?, payment_link = ?
     `).run(guildId, currency, paymentQr, paymentLink, currency, paymentQr, paymentLink);
   },
-  addShopItem(guildId, name, description, emoji, price, stock) {
+  addShopItem(guildId, name, description, emoji, price, stock, duration) {
     return db.prepare(
-      'INSERT INTO shop_items (guild_id, name, description, emoji, price, stock) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(guildId, name, description, emoji, price, stock);
+      'INSERT INTO shop_items (guild_id, name, description, emoji, price, stock, duration) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(guildId, name, description, emoji, price, stock, duration || null);
   },
   removeShopItem(id, guildId) {
     return db.prepare('DELETE FROM shop_items WHERE id = ? AND guild_id = ?').run(id, guildId);
