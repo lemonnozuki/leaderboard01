@@ -16,7 +16,7 @@ function generatePassportId() {
 }
 
 function formatDate(ts) {
-  return new Date(ts * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(ts * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/ /g, '/');
 }
 
 module.exports = {
@@ -105,7 +105,7 @@ module.exports = {
       ctx.font = '10px "PassportFont"';
       ctx.fillText(field.label, infoX, fy);
       ctx.fillStyle = '#ffffff';
-      ctx.font = '16px "PassportFont"';
+      ctx.font = field.label === 'USER ID' ? '13px "PassportFont"' : '16px "PassportFont"';
       ctx.fillText(field.value, infoX, fy + 16);
       fy += 52;
     }
