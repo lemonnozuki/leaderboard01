@@ -1,5 +1,9 @@
 const Database = require('better-sqlite3');
-const db = new Database('leaderboard.db');
+const path = require('path');
+const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'leaderboard.db')
+  : 'leaderboard.db';
+const db = new Database(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS boards (
