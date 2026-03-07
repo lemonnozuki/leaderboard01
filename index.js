@@ -1,7 +1,8 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, ActivityType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { startNotifier } = require('./utils/notifier');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
@@ -16,7 +17,11 @@ for (const file of fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'))) 
 
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
-  client.user.setPresence({ status: 'dnd' });
+  client.user.setPresence({
+    status: 'dnd',
+    activities: [{ name: '/help', type: ActivityType.Watching }]
+  });
+  startNotifier(client);
 });
 
 client.on('interactionCreate', async interaction => {
