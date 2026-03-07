@@ -1,16 +1,29 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
 const db = require('../database');
 const { emoji } = require('../config');
 
 const ep = { flags: MessageFlags.Ephemeral };
+const v2 = { flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
+
+function makeContainer(accentColor, content) {
+  return new ContainerBuilder()
+    .setAccentColor(accentColor)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(content));
+}
+
+function makeContainerWithList(accentColor, title, items) {
+  return new ContainerBuilder()
+    .setAccentColor(accentColor)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### ${title}`))
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(items));
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('noti')
     .setDescription('Manage notifications')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-
-    // yt
     .addSubcommandGroup(group => group
       .setName('yt')
       .setDescription('YouTube notifications')
@@ -31,8 +44,6 @@ module.exports = {
         .setDescription('List all YouTube notifications')
       )
     )
-
-    // twch
     .addSubcommandGroup(group => group
       .setName('twitch')
       .setDescription('Twitch notifications')
@@ -71,35 +82,43 @@ module.exports = {
         try {
           const ytChannelId = await resolveYoutubeChannelId(input);
           if (!ytChannelId) {
-            return interaction.editReply(`${e.error} Could not find YouTube channel. Make sure the URL or ID is correct.`);
+            return interaction.editReply({ content: `${e.error} Could not find YouTube channel.` });
           }
 
           const info = await fetchYoutubeChannelInfo(ytChannelId);
           db.addYoutubeNoti(guildId, discordChannel.id, ytChannelId, info.name, interval);
 
-          return interaction.editReply(`${e.success} Now tracking **${info.name}** — notifications will be sent to ${discordChannel} every **${interval}** minutes.`);
+          const container = makeContainer(0xff0000,
+            `### ${e.success} YouTube Notification Added\n` +
+            new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true) +
+            `<:yt:1479709933179109537> **Channel:** ${info.name}\n<:4214_notify:1479710314147614845> **Notify in:** ${discordChannel}\n⏱ **Interval:** every **${interval}** minutes`
+          );
+          return interaction.editReply({ components: [container], flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
         } catch (err) {
-          return interaction.editReply(`${e.error} Failed to add YouTube notification: ${err.message}`);
+          return interaction.editReply({ content: `${e.error} Failed: ${err.message}` });
         }
       }
 
       if (sub === 'remove') {
         const ytChannelId = interaction.options.getString('channel_id');
         db.removeYoutubeNoti(guildId, ytChannelId);
-        return interaction.reply({ content: `${e.remove} Removed YouTube notification for \`${ytChannelId}\`.`, ...ep });
+        const container = makeContainer(0xff0000, `${e.remove} Removed YouTube notification for \`${ytChannelId}\`.`);
+        return interaction.reply({ components: [container], ...v2 });
       }
 
       if (sub === 'list') {
         const notis = db.listYoutubeNoti(guildId);
-        if (!notis.length) return interaction.reply({ content: `${e.list} No YouTube notifications set up.`, ...ep });
+        if (!notis.length) {
+          const container = makeContainer(0xff0000, `${e.list} No YouTube notifications set up.`);
+          return interaction.reply({ components: [container], ...v2 });
+        }
 
-        const embed = new EmbedBuilder()
-          .setColor(0xff0000)
-          .setTitle('YouTube Notifications')
-          .setDescription(notis.map((n, i) => `**${i + 1}.** [${n.yt_channel_name}](https://youtube.com/channel/${n.yt_channel_id}) → <#${n.channel_id}> every **${n.interval_minutes}m**`).join('\n'))
-          .setTimestamp();
+        const items = notis.map((n, i) =>
+          `**${i + 1}.** [${n.yt_channel_name}](https://youtube.com/channel/${n.yt_channel_id}) → <#${n.channel_id}> every **${n.interval_minutes}m**`
+        ).join('\n');
 
-        return interaction.reply({ embeds: [embed], ...ep });
+        const container = makeContainerWithList(0xff0000, '<:yt:1479709933179109537> YouTube Notifications', items);
+        return interaction.reply({ components: [container], ...v2 });
       }
     }
 
@@ -110,26 +129,37 @@ module.exports = {
         const interval = interaction.options.getInteger('interval') || 2;
 
         db.addTwitchNoti(guildId, discordChannel.id, username, interval);
-        return interaction.reply({ content: `${e.success} Now tracking **${username}** on Twitch — notifications will be sent to ${discordChannel} every **${interval}** minutes.`, ...ep });
+
+        const container = new ContainerBuilder()
+          .setAccentColor(0x9146ff)
+          .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### ${e.success} Twitch Notification Added`))
+          .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+            `<:twitch:1479710502044041378> **Channel:** ${username}\n<:notify:1479710314147614845> **Notify in:** ${discordChannel}\n⏱ **Interval:** every **${interval}** minutes`
+          ));
+        return interaction.reply({ components: [container], ...v2 });
       }
 
       if (sub === 'remove') {
         const username = interaction.options.getString('username').toLowerCase();
         db.removeTwitchNoti(guildId, username);
-        return interaction.reply({ content: `${e.remove} Removed Twitch notification for **${username}**.`, ...ep });
+        const container = makeContainer(0x9146ff, `${e.remove} Removed Twitch notification for **${username}**.`);
+        return interaction.reply({ components: [container], ...v2 });
       }
 
       if (sub === 'list') {
         const notis = db.listTwitchNoti(guildId);
-        if (!notis.length) return interaction.reply({ content: `${e.list} No Twitch notifications set up.`, ...ep });
+        if (!notis.length) {
+          const container = makeContainer(0x9146ff, `${e.list} No Twitch notifications set up.`);
+          return interaction.reply({ components: [container], ...v2 });
+        }
 
-        const embed = new EmbedBuilder()
-          .setColor(0x9146ff)
-          .setTitle('Twitch Notifications')
-          .setDescription(notis.map((n, i) => `**${i + 1}.** [${n.twitch_username}](https://twitch.tv/${n.twitch_username}) → <#${n.channel_id}> every **${n.interval_minutes}m** ${n.is_live ? '🔴 LIVE' : ''}`).join('\n'))
-          .setTimestamp();
+        const items = notis.map((n, i) =>
+          `**${i + 1}.** [${n.twitch_username}](https://twitch.tv/${n.twitch_username}) → <#${n.channel_id}> every **${n.interval_minutes}m** ${n.is_live ? '🔴 LIVE' : ''}`
+        ).join('\n');
 
-        return interaction.reply({ embeds: [embed], ...ep });
+        const container = makeContainerWithList(0x9146ff, '🎮 Twitch Notifications', items);
+        return interaction.reply({ components: [container], ...v2 });
       }
     }
   }
@@ -137,11 +167,8 @@ module.exports = {
 
 async function resolveYoutubeChannelId(input) {
   const apiKey = process.env.YOUTUBE_API_KEY;
-
-  // if its already a channel ID (starts with UC)
   if (input.startsWith('UC')) return input;
 
-  // extract from URL
   const handleMatch = input.match(/youtube\.com\/@([\w-]+)/);
   const channelMatch = input.match(/youtube\.com\/channel\/([\w-]+)/);
 
