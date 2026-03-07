@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MediaGalleryBuilder, MediaGalleryItemBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const v2 = { flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
 const startTime = Date.now();
@@ -18,13 +18,16 @@ module.exports = {
     const guildCount = client.guilds.cache.size;
     const totalMembers = client.guilds.cache.reduce((a, g) => a + g.memberCount, 0);
     const avatar = bot.displayAvatarURL({ size: 256, extension: 'png' });
+    const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${bot.id}&permissions=8&scope=bot%20applications.commands`;
 
     const container = new ContainerBuilder()
       .setAccentColor(0x5865f2)
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `### 🤖 ${bot.username}\n` +
-        `🖼️ [Avatar](${avatar})`
-      ))
+      .addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(avatar)
+        )
+      )
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🤖 ${bot.username}`))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
         `🆔 **ID:** \`${bot.id}\`\n` +
@@ -35,9 +38,15 @@ module.exports = {
         `👥 **Total members:** ${totalMembers.toLocaleString()}`
       ))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `🔗 [Invite](https://discord.com/oauth2/authorize?client_id=${bot.id}&permissions=8&scope=bot%20applications.commands)`
-      ));
+      .addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setLabel('Invite')
+            .setURL(inviteUrl)
+            .setStyle(ButtonStyle.Link)
+            .setEmoji('🔗')
+        )
+      );
 
     return interaction.reply({ components: [container], ...v2 });
   }

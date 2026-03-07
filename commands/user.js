@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MediaGalleryBuilder, MediaGalleryItemBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const v2 = { flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
 
@@ -35,12 +35,32 @@ module.exports = {
       : '';
     const botTag = target.bot ? ' 🤖' : '';
 
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setLabel('Avatar')
+        .setURL(avatar)
+        .setStyle(ButtonStyle.Link)
+        .setEmoji('🖼️')
+    );
+
+    if (banner) {
+      buttons.addComponents(
+        new ButtonBuilder()
+          .setLabel('Banner')
+          .setURL(banner)
+          .setStyle(ButtonStyle.Link)
+          .setEmoji('🎨')
+      );
+    }
+
     const container = new ContainerBuilder()
       .setAccentColor(member?.displayColor || 0x5865f2)
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `### 👤 ${target.username}${botTag}\n` +
-        `🖼️ [Avatar](${avatar})${banner ? ` • 🎨 [Banner](${banner})` : ''}`
-      ))
+      .addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(avatar)
+        )
+      )
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 👤 ${target.username}${botTag}`))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
         `🆔 **ID:** \`${target.id}\`${nickname}\n` +
@@ -48,7 +68,9 @@ module.exports = {
         `📥 **Joined server:** ${joinedAt}${joinedRel ? ` (${joinedRel})` : ''}${boostSince}\n` +
         (badges.length ? `🏅 **Badges:** ${badges.join(' ')}\n` : '') +
         `\n🎭 **Roles [${member?.roles.cache.size - 1 || 0}]:** ${roles}`
-      ));
+      ))
+      .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+      .addActionRowComponents(buttons);
 
     return interaction.reply({ components: [container], ...v2 });
   }
