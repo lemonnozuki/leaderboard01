@@ -47,6 +47,13 @@ db.exec(`
     UNIQUE(guild_id, twitch_username)
   );
 
+  CREATE TABLE IF NOT EXISTS passports (
+    user_id TEXT PRIMARY KEY,
+    guild_id TEXT NOT NULL,
+    passport_id TEXT NOT NULL,
+    issued_at INTEGER DEFAULT (strftime('%s','now'))
+  );
+
   CREATE TABLE IF NOT EXISTS shop_settings (
     guild_id TEXT PRIMARY KEY,
     currency TEXT DEFAULT 'VND',
@@ -175,6 +182,12 @@ module.exports = {
 
   updateTwitchLiveStatus(id, isLive) {
     return db.prepare('UPDATE noti_twitch SET is_live = ? WHERE id = ?').run(isLive ? 1 : 0, id);
+  },
+  getPassport(userId) {
+    return db.prepare('SELECT * FROM passports WHERE user_id = ?').get(userId);
+  },
+  createPassport(userId, guildId, passportId) {
+    return db.prepare('INSERT OR IGNORE INTO passports (user_id, guild_id, passport_id) VALUES (?, ?, ?)').run(userId, guildId, passportId);
   },
   getShopSettings(guildId) {
     return db.prepare('SELECT * FROM shop_settings WHERE guild_id = ?').get(guildId);
