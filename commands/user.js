@@ -29,18 +29,18 @@ module.exports = {
     const badges = getUserBadges(target.flags);
     const avatar = target.displayAvatarURL({ size: 256, extension: 'png' });
     const banner = target.bannerURL?.({ size: 1024 }) || null;
-    const nickname = member?.nickname ? `\n🏷️ **Nickname:** ${member.nickname}` : '';
+    const nickname = member?.nickname ? `\n<:user:1479429927152652308> **Nickname:** ${member.nickname}` : '';
     const boostSince = member?.premiumSince
-      ? `\n💎 **Boosting since:** <t:${Math.floor(member.premiumSinceTimestamp / 1000)}:R>`
+      ? `\n<:boost:1479797601204437125> **Boosting since:** <t:${Math.floor(member.premiumSinceTimestamp / 1000)}:R>`
       : '';
-    const botTag = target.bot ? ' 🤖' : '';
+    const botTag = target.bot ? ' <:bot:1479797826056749136> ' : '';
 
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setLabel('Avatar')
         .setURL(avatar)
         .setStyle(ButtonStyle.Link)
-        .setEmoji('🖼️')
+        .setEmoji('<a:avatar:1479798149756223570>')
     );
 
     if (banner) {
@@ -63,10 +63,10 @@ module.exports = {
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 👤 ${target.username}${botTag}`))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `🆔 **ID:** \`${target.id}\`${nickname}\n` +
-        `📅 **Account created:** ${createdAt} (${createdRel})\n` +
-        `📥 **Joined server:** ${joinedAt}${joinedRel ? ` (${joinedRel})` : ''}${boostSince}\n` +
-        (badges.length ? `🏅 **Badges:** ${badges.join(' ')}\n` : '') +
+        `<:id:1479798826478080031> **ID:** \`${target.id}\`${nickname}\n` +
+        `<a:calendar:1479800443793182780> **Account created:** ${createdAt} (${createdRel})\n` +
+        `<:ewt:1479801319719174226> **Joined server:** ${joinedAt}${joinedRel ? ` (${joinedRel})` : ''}${boostSince}\n` +
+        (badges.length ? `<:badges:1479802003931664536> **Badges:** ${badges.join(' ')}\n` : '') +
         `\n🎭 **Roles [${member?.roles.cache.size - 1 || 0}]:** ${roles}`
       ))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
@@ -79,18 +79,17 @@ module.exports = {
 function getUserBadges(flags) {
   if (!flags) return [];
   const map = {
-    Staff: '👨‍💼',
-    Partner: '🤝',
-    Hypesquad: '🏠',
-    BugHunterLevel1: '🐛',
-    BugHunterLevel2: '🐛',
-    HypeSquadOnlineHouse1: '🏠',
-    HypeSquadOnlineHouse2: '🏠',
-    HypeSquadOnlineHouse3: '🏠',
-    PremiumEarlySupporter: '⭐',
-    VerifiedDeveloper: '💻',
-    CertifiedModerator: '🛡️',
-    ActiveDeveloper: '🔧',
+    Staff: '<:staff:1479802745987797144>',
+    Partner: '<:partner:1479802984337510530>',
+    Hypesquad: '<:hps:1479802767856898190>',
+    BugHunterLevel1: '<:greenbughunter:1479803279935537193>',
+    BugHunterLevel2: '<:ylbughunter:1479803311128445011>',
+    HypeSquadOnlineHouse1: '<:alance:1479805855078813716>',
+    HypeSquadOnlineHouse2: '<:redhyp:1479804961800847411>',
+    HypeSquadOnlineHouse3: '<:ravery:1479805879015571596>',
+    PremiumEarlySupporter: '<:earlysupporter:1479804443414368347>',
+    EarlyVerifiedDeveloper: '<a:elv:1479807936246190222>',
+    CertifiedModerator: '<:Moderator:1479808833101631550>',
   };
   return flags.toArray().map(f => map[f]).filter(Boolean);
 }

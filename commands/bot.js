@@ -30,12 +30,12 @@ module.exports = {
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🤖 ${bot.username}`))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `🆔 **ID:** \`${bot.id}\`\n` +
-        `📅 **Created:** ${createdAt}\n` +
-        `📡 **Ping:** ${ping}ms\n` +
-        `⏱️ **Uptime:** ${uptime}\n` +
-        `🏠 **Servers:** ${guildCount}\n` +
-        `👥 **Total members:** ${totalMembers.toLocaleString()}`
+        `<:id:1479798826478080031> **ID:** \`${bot.id}\`\n` +
+        `<a:calendar:1479800443793182780> **Created:** ${createdAt}\n` +
+        `<:stable_ping:1479809949344469003> **Ping:** ${ping}ms\n` +
+        `<:uptime:1479809950845894766> **Uptime:** ${uptime}\n` +
+        `<:Servers:1479809947196985364> **Servers:** ${guildCount}\n` +
+        `<:users_logo:1479809952284676137> **Total members:** ${totalMembers.toLocaleString()}`
       ))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addActionRowComponents(
@@ -44,7 +44,7 @@ module.exports = {
             .setLabel('Invite')
             .setURL(inviteUrl)
             .setStyle(ButtonStyle.Link)
-            .setEmoji('🔗')
+            .setEmoji('<:green_link:1479810441029881887>')
         )
       );
 
