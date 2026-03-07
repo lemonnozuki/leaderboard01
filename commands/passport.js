@@ -16,7 +16,7 @@ function generatePassportId() {
 }
 
 function formatDate(ts) {
-  return new Date(ts * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/ /g, '/');
+  return new Date(ts * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/ /g, '-');
 }
 
 module.exports = {
@@ -36,7 +36,7 @@ module.exports = {
       passport = db.getPassport(user.id);
     }
 
-    const W = 720, H = 480;
+    const W = 720, H = 540;
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
 
