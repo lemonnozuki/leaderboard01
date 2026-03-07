@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, ThumbnailBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
 
 const v2 = { flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
 const startTime = Date.now();
@@ -16,22 +16,19 @@ module.exports = {
     const createdAt = `<t:${Math.floor(bot.createdTimestamp / 1000)}:D>`;
     const ping = client.ws.ping;
     const guildCount = client.guilds.cache.size;
-    const avatar = bot.displayAvatarURL({ size: 256, extension: 'png' });
-
     const totalMembers = client.guilds.cache.reduce((a, g) => a + g.memberCount, 0);
+    const avatar = bot.displayAvatarURL({ size: 256, extension: 'png' });
 
     const container = new ContainerBuilder()
       .setAccentColor(0x5865f2)
-      .addThumbnailComponents(
-        new ThumbnailBuilder().setURL(avatar)
-      )
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
         `### 🤖 ${bot.username}\n` +
-        `🆔 **ID:** \`${bot.id}\`\n` +
-        `📅 **Created:** ${createdAt}`
+        `🖼️ [Avatar](${avatar})`
       ))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+        `🆔 **ID:** \`${bot.id}\`\n` +
+        `📅 **Created:** ${createdAt}\n` +
         `📡 **Ping:** ${ping}ms\n` +
         `⏱️ **Uptime:** ${uptime}\n` +
         `🏠 **Servers:** ${guildCount}\n` +
@@ -39,7 +36,7 @@ module.exports = {
       ))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `🔗 [Invite](https://discord.com/oauth2/authorize?client_id=${bot.id}&permissions=8&scope=bot%20applications.commands) • 🖼️ [Avatar](${avatar})`
+        `🔗 [Invite](https://discord.com/oauth2/authorize?client_id=${bot.id}&permissions=8&scope=bot%20applications.commands)`
       ));
 
     return interaction.reply({ components: [container], ...v2 });

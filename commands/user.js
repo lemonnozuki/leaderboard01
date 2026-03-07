@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, ThumbnailBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
 
 const v2 = { flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
 
@@ -29,31 +29,25 @@ module.exports = {
     const badges = getUserBadges(target.flags);
     const avatar = target.displayAvatarURL({ size: 256, extension: 'png' });
     const banner = target.bannerURL?.({ size: 1024 }) || null;
-
     const nickname = member?.nickname ? `\n🏷️ **Nickname:** ${member.nickname}` : '';
     const boostSince = member?.premiumSince
       ? `\n💎 **Boosting since:** <t:${Math.floor(member.premiumSinceTimestamp / 1000)}:R>`
       : '';
     const botTag = target.bot ? ' 🤖' : '';
 
-    const lines = [
-      `### 👤 ${target.username}#${target.discriminator === '0' ? '' : target.discriminator}${botTag}`,
-      `🆔 **ID:** \`${target.id}\`${nickname}`,
-      `📅 **Account created:** ${createdAt} (${createdRel})`,
-      `📥 **Joined server:** ${joinedAt}${joinedRel ? ` (${joinedRel})` : ''}${boostSince}`,
-      badges.length ? `🏅 **Badges:** ${badges.join(' ')}` : '',
-      `\n🎭 **Roles [${member?.roles.cache.size - 1 || 0}]:** ${roles}`,
-    ].filter(Boolean).join('\n');
-
     const container = new ContainerBuilder()
       .setAccentColor(member?.displayColor || 0x5865f2)
-      .addThumbnailComponents(
-        new ThumbnailBuilder().setURL(avatar)
-      )
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(lines))
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+        `### 👤 ${target.username}${botTag}\n` +
+        `🖼️ [Avatar](${avatar})${banner ? ` • 🎨 [Banner](${banner})` : ''}`
+      ))
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `🖼️ [Avatar](${avatar})${banner ? ` • 🎨 [Banner](${banner})` : ''}`
+        `🆔 **ID:** \`${target.id}\`${nickname}\n` +
+        `📅 **Account created:** ${createdAt} (${createdRel})\n` +
+        `📥 **Joined server:** ${joinedAt}${joinedRel ? ` (${joinedRel})` : ''}${boostSince}\n` +
+        (badges.length ? `🏅 **Badges:** ${badges.join(' ')}\n` : '') +
+        `\n🎭 **Roles [${member?.roles.cache.size - 1 || 0}]:** ${roles}`
       ));
 
     return interaction.reply({ components: [container], ...v2 });
