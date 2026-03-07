@@ -88,12 +88,14 @@ module.exports = {
           const info = await fetchYoutubeChannelInfo(ytChannelId);
           db.addYoutubeNoti(guildId, discordChannel.id, ytChannelId, info.name, interval);
 
-          const container = makeContainer(0xff0000,
-            `### ${e.success} YouTube Notification Added\n` +
-            new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true) +
-            `<:yt:1479709933179109537> **Channel:** ${info.name}\n<:4214_notify:1479710314147614845> **Notify in:** ${discordChannel}\n⏱ **Interval:** every **${interval}** minutes`
-          );
-          return interaction.editReply({ components: [container], flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
+          const container = new ContainerBuilder()
+            .setAccentColor(0xff0000)
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### ${e.success} YouTube Notification Added`))
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+              `<:yt:1479709933179109537> **Channel:** ${info.name}\n<:4214_notify:1479710314147614845> **Notify in:** ${discordChannel}\n⏱ **Interval:** every **${interval}** minutes`
+            ));
+          return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 });
         } catch (err) {
           return interaction.editReply({ content: `${e.error} Failed: ${err.message}` });
         }
@@ -135,7 +137,7 @@ module.exports = {
           .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### ${e.success} Twitch Notification Added`))
           .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
           .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-            `<:twitch:1479710502044041378> **Channel:** ${username}\n<:notify:1479710314147614845> **Notify in:** ${discordChannel}\n⏱ **Interval:** every **${interval}** minutes`
+            `<:twitch:1479710502044041378> **Channel:** ${username}\n<:4214_notify:1479710314147614845> **Notify in:** ${discordChannel}\n⏱ **Interval:** every **${interval}** minutes`
           ));
         return interaction.reply({ components: [container], ...v2 });
       }
