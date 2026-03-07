@@ -33,6 +33,16 @@ client.on('interactionCreate', async interaction => {
     return;
   }
 
+  if (interaction.isButton()) {
+    if (interaction.customId.startsWith('shop_')) {
+      const shopCommand = client.commands.get('shop');
+      if (shopCommand?.handleButton) {
+        try { await shopCommand.handleButton(interaction); } catch (e) { console.error(e); }
+      }
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);

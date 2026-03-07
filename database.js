@@ -46,6 +46,44 @@ db.exec(`
     interval_minutes INTEGER DEFAULT 2,
     UNIQUE(guild_id, twitch_username)
   );
+
+  CREATE TABLE IF NOT EXISTS shop_settings (
+    guild_id TEXT PRIMARY KEY,
+    currency TEXT DEFAULT 'VND',
+    payment_qr TEXT,
+    payment_link TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS shop_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    emoji TEXT,
+    price REAL NOT NULL,
+    stock INTEGER DEFAULT -1,
+    created_at INTEGER DEFAULT (strftime('%s','now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS shop_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    item_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at INTEGER DEFAULT (strftime('%s','now')),
+    FOREIGN KEY(item_id) REFERENCES shop_items(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS shop_inventory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    item_id INTEGER NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    bought_at INTEGER DEFAULT (strftime('%s','now')),
+    FOREIGN KEY(item_id) REFERENCES shop_items(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = {
@@ -133,7 +171,71 @@ module.exports = {
   getAllTwitchNoti() {
     return db.prepare('SELECT * FROM noti_twitch').all();
   },
+
   updateTwitchLiveStatus(id, isLive) {
     return db.prepare('UPDATE noti_twitch SET is_live = ? WHERE id = ?').run(isLive ? 1 : 0, id);
+  },
+  getShopSettings(guildId) {
+    return db.prepare('SELECT * FROM shop_settings WHERE guild_id = ?').get(guildId);
+  },
+  setShopSettings(guildId, currency, paymentQr, paymentLink) {
+    return db.prepare(`
+      INSERT INTO shop_settings (guild_id, currency, payment_qr, payment_link)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(guild_id) DO UPDATE SET currency = ?, payment_qr = ?, payment_link = ?
+    `).run(guildId, currency, paymentQr, paymentLink, currency, paymentQr, paymentLink);
+  },
+  addShopItem(guildId, name, description, emoji, price, stock) {
+    return db.prepare(
+      'INSERT INTO shop_items (guild_id, name, description, emoji, price, stock) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(guildId, name, description, emoji, price, stock);
+  },
+  removeShopItem(id, guildId) {
+    return db.prepare('DELETE FROM shop_items WHERE id = ? AND guild_id = ?').run(id, guildId);
+  },
+  getShopItem(id) {
+    return db.prepare('SELECT * FROM shop_items WHERE id = ?').get(id);
+  },
+  listShopItems(guildId) {
+    return db.prepare('SELECT * FROM shop_items WHERE guild_id = ? ORDER BY price ASC').all(guildId);
+  },
+  decreaseStock(id) {
+    return db.prepare('UPDATE shop_items SET stock = stock - 1 WHERE id = ? AND stock > 0').run(id);
+  },
+  createOrder(guildId, userId, itemId) {
+    return db.prepare(
+      'INSERT INTO shop_orders (guild_id, user_id, item_id) VALUES (?, ?, ?)'
+    ).run(guildId, userId, itemId);
+  },
+  getOrder(id) {
+    return db.prepare('SELECT * FROM shop_orders WHERE id = ?').get(id);
+  },
+  getPendingOrders(guildId) {
+    return db.prepare(`
+      SELECT o.*, i.name as item_name, i.emoji, i.price
+      FROM shop_orders o
+      JOIN shop_items i ON o.item_id = i.id
+      WHERE o.guild_id = ? AND o.status = 'pending'
+      ORDER BY o.created_at DESC
+    `).all(guildId);
+  },
+  updateOrderStatus(id, status) {
+    return db.prepare('UPDATE shop_orders SET status = ? WHERE id = ?').run(status, id);
+  },
+  addInventory(guildId, userId, itemId) {
+    return db.prepare(`
+      INSERT INTO shop_inventory (guild_id, user_id, item_id)
+      VALUES (?, ?, ?)
+      ON CONFLICT DO UPDATE SET quantity = quantity + 1
+    `).run(guildId, userId, itemId);
+  },
+  getInventory(guildId, userId) {
+    return db.prepare(`
+      SELECT i.*, si.name, si.emoji, si.description
+      FROM shop_inventory i
+      JOIN shop_items si ON i.item_id = si.id
+      WHERE i.guild_id = ? AND i.user_id = ?
+      ORDER BY i.bought_at DESC
+    `).all(guildId, userId);
   },
 };
