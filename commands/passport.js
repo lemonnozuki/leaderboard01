@@ -1,8 +1,10 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
+const path = require('path');
 const db = require('../database');
 
-GlobalFonts.loadSystemFonts();
+const FONT_PATH = path.join(__dirname, '../assets/fonts/font.otf');
+GlobalFonts.registerFromPath(FONT_PATH, 'PassportFont');
 
 function generatePassportId() {
   const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -14,17 +16,8 @@ function generatePassportId() {
 }
 
 function formatDate(ts) {
-  const d = new Date(ts * 1000);
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(ts * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
-
-const FONT = GlobalFonts.families.find(f =>
-  ['DejaVu Sans', 'Liberation Sans', 'FreeSans', 'Arial', 'Ubuntu'].includes(f.family)
-)?.family || 'sans-serif';
-
-const MONO = GlobalFonts.families.find(f =>
-  ['DejaVu Sans Mono', 'Liberation Mono', 'FreeMono', 'Courier New', 'Ubuntu Mono'].includes(f.family)
-)?.family || 'monospace';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -57,11 +50,11 @@ module.exports = {
     ctx.fillRect(W - 6, 0, 6, H);
 
     ctx.fillStyle = '#c9aa71';
-    ctx.font = `bold 13px "${FONT}"`;
+    ctx.font = '13px "PassportFont"';
     ctx.fillText('REPUBLIC OF DISCORD', 40, 38);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold 28px "${FONT}"`;
+    ctx.font = '28px "PassportFont"';
     ctx.fillText('PASSPORT', 40, 72);
 
     ctx.strokeStyle = '#c9aa71';
@@ -90,7 +83,7 @@ module.exports = {
       ctx.fillStyle = '#3a4a7a';
       ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
       ctx.fillStyle = '#ffffff';
-      ctx.font = `bold 48px "${FONT}"`;
+      ctx.font = '48px "PassportFont"';
       ctx.textAlign = 'center';
       ctx.fillText(user.username[0].toUpperCase(), avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 16);
       ctx.textAlign = 'left';
@@ -109,10 +102,10 @@ module.exports = {
     let fy = 115;
     for (const field of fields) {
       ctx.fillStyle = '#c9aa71';
-      ctx.font = `10px "${FONT}"`;
+      ctx.font = '10px "PassportFont"';
       ctx.fillText(field.label, infoX, fy);
       ctx.fillStyle = '#ffffff';
-      ctx.font = `bold 16px "${FONT}"`;
+      ctx.font = '16px "PassportFont"';
       ctx.fillText(field.value, infoX, fy + 16);
       fy += 52;
     }
@@ -125,11 +118,11 @@ module.exports = {
     const mrz2 = `${passport.passport_id}${pad(user.id.slice(-13), 13)}${pad('', 15)}`;
 
     ctx.fillStyle = '#556688';
-    ctx.font = `11px "${MONO}"`;
+    ctx.font = '11px "PassportFont"';
     ctx.fillText(mrz1.slice(0, 44), 40, H - 62);
     ctx.fillText(mrz2.slice(0, 44), 40, H - 44);
 
-    ctx.font = `10px "${FONT}"`;
+    ctx.font = '10px "PassportFont"';
     ctx.fillText('LEADERBOARD.01 — OFFICIAL DOCUMENT', 40, H - 20);
 
     const buffer = canvas.toBuffer('image/png');
