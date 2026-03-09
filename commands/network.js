@@ -109,14 +109,14 @@ module.exports = {
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🌐 IP Information`))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-          `🔢 **IP:** \`${info.ip}\`\n` +
-          `🏢 **ISP:** ${info.org || 'Unknown'}\n` +
-          `🌍 **Country:** ${info.country_name || 'Unknown'} ${info.country_flag_emoji || ''}\n` +
-          `🏙️ **City:** ${info.city || 'Unknown'}, ${info.region || ''}\n` +
-          `📮 **Postal:** ${info.postal || 'N/A'}\n` +
-          `🕐 **Timezone:** ${info.timezone || 'Unknown'}\n` +
+          `<:ipaddress:1480107535863119953> **IP:** \`${info.ip}\`\n` +
+          `<:isp:1480107720521683137> **ISP:** ${info.org || 'Unknown'}\n` +
+          `<:earth:1480107923467272264> **Country:** ${info.country_name || 'Unknown'} ${info.country_flag_emoji || ''}\n` +
+          `<:city:1480108354646053020> **City:** ${info.city || 'Unknown'}, ${info.region || ''}\n` +
+          `<:psstl:1480108718678081750> **Postal:** ${info.postal || 'N/A'}\n` +
+          `<:timezone:1480108981560283146> **Timezone:** ${info.timezone || 'Unknown'}\n` +
           `<:uptimeasn:1479809950845894766> **ASN:** ${info.asn || 'Unknown'}\n` +
-          `🗺️ **Coords:** ${info.latitude}, ${info.longitude}`
+          `<:coordinates:1480109609623486664> **Coords:** ${info.latitude}, ${info.longitude}`
         ));
 
       return interaction.editReply({ components: [container], flags });
@@ -166,8 +166,8 @@ module.exports = {
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           result
-            ? `📌 **A Records:** ${result.a.length ? result.a.map(r => `\`${r}\``).join(', ') : 'None'}\n` +
-              `🔁 **PTR Records:** ${result.ptr.length ? result.ptr.join(', ') : 'None'}`
+            ? `<:pin:1480110129918640271> **A Records:** ${result.a.length ? result.a.map(r => `\`${r}\``).join(', ') : 'None'}\n` +
+              `<:ptr_dns:1480551572747587787> **PTR Records:** ${result.ptr.length ? result.ptr.join(', ') : 'None'}`
             : `${emoji.error} DNS lookup failed.`
         ));
 
@@ -195,12 +195,12 @@ module.exports = {
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           ipInfo && !ipInfo.error
-            ? `🔢 **IP:** \`${ipInfo.ip}\`\n` +
-              `🏢 **Org:** ${ipInfo.org || 'Unknown'}\n` +
-              `📡 **ASN:** ${ipInfo.asn || 'Unknown'}\n` +
-              `🌍 **Country:** ${ipInfo.country_name || 'Unknown'} ${ipInfo.country_flag_emoji || ''}\n` +
-              `🏙️ **City:** ${ipInfo.city || 'Unknown'}, ${ipInfo.region || ''}\n` +
-              `🕐 **Timezone:** ${ipInfo.timezone || 'Unknown'}`
+            ? `<:ipaddress:1480107535863119953> **IP:** \`${ipInfo.ip}\`\n` +
+              `<:orgh:1480552572027670619> **Org:** ${ipInfo.org || 'Unknown'}\n` +
+              `<:uptimeasn:1479809950845894766> **ASN:** ${ipInfo.asn || 'Unknown'}\n` +
+              `<:earth:1480107923467272264> **Country:** ${ipInfo.country_name || 'Unknown'} ${ipInfo.country_flag_emoji || ''}\n` +
+              `<:city:1480108354646053020> **City:** ${ipInfo.city || 'Unknown'}, ${ipInfo.region || ''}\n` +
+              `<:timezone:1480108981560283146> **Timezone:** ${ipInfo.timezone || 'Unknown'}`
             : `${emoji.error} Could not resolve WHOIS info for \`${target}\`.`
         ));
 
@@ -220,8 +220,8 @@ module.exports = {
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🏓 Bot Ping`))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-          `📡 **WebSocket:** ${ws}ms\n` +
-          `🌐 **REST API:** ${rest}ms`
+          `<:wbsocketlow:1480554103397683402> **WebSocket:** ${ws}ms\n` +
+          `<:rest_api:1480553422938833069> **REST API:** ${rest}ms`
         ));
 
       return interaction.editReply({ components: [container], flags });
