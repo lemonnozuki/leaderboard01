@@ -106,7 +106,7 @@ module.exports = {
 
       const container = new ContainerBuilder()
         .setAccentColor(0x5865f2)
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🌐 IP Information`))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### <:ipaddress:1480107535863119953> IP Information`))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           `<:ipaddress:1480107535863119953> **IP:** \`${info.ip}\`\n` +
@@ -128,7 +128,7 @@ module.exports = {
 
       const container = new ContainerBuilder()
         .setAccentColor(result ? 0x57f287 : 0xed4245)
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 📡 Ping — \`${host}\``))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### <:ol_ping:1480556847147782196> Ping — \`${host}\``))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           result
@@ -145,7 +145,7 @@ module.exports = {
 
       const container = new ContainerBuilder()
         .setAccentColor(0xfee75c)
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🛤️ Traceroute — \`${host}\``))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### <:tracerouter_maybe:1480558713952669716> Traceroute — \`${host}\``))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           result
@@ -162,7 +162,7 @@ module.exports = {
 
       const container = new ContainerBuilder()
         .setAccentColor(0x5865f2)
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🔍 DNS Lookup — \`${host}\``))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### <:dns_loopup:1480559107705671750> DNS Lookup — \`${host}\``))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           result
@@ -191,7 +191,7 @@ module.exports = {
 
       const container = new ContainerBuilder()
         .setAccentColor(0x9146ff)
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 🔎 WHOIS — \`${target}\``))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### <:whois:1480559444768198789> WHOIS — \`${target}\``))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           ipInfo && !ipInfo.error
