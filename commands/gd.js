@@ -1,13 +1,11 @@
 const {
   SlashCommandBuilder, MessageFlags,
   ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize,
+  MediaGalleryBuilder, MediaGalleryItemBuilder,
   ActionRowBuilder, ButtonBuilder, ButtonStyle
 } = require('discord.js');
 const https = require('https');
 const { emoji } = require('../config');
-
-const v2 = { flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
-const v2pub = { flags: MessageFlags.IsComponentsV2 };
 
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
@@ -25,16 +23,8 @@ const DIFF_EMOJI = {
   'Hard Demon': '😈', 'Insane Demon': '😈', 'Extreme Demon': '💀', 'Demon': '😈', 'N/A': '⬜'
 };
 
-const RANK_EMOJI = { 1: '🥇', 2: '🥈', 3: '🥉' };
-
-function diffEmoji(diff) {
-  return DIFF_EMOJI[diff] || '⬜';
-}
-
-function formatNum(n) {
-  if (!n && n !== 0) return 'N/A';
-  return Number(n).toLocaleString();
-}
+function diffEmoji(diff) { return DIFF_EMOJI[diff] || '⬜'; }
+function formatNum(n) { if (!n && n !== 0) return 'N/A'; return Number(n).toLocaleString(); }
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -56,15 +46,12 @@ module.exports = {
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
     const visible = interaction.options.getBoolean('visible') ?? false;
-    const flags = visible
-      ? MessageFlags.IsComponentsV2
-      : MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
+    const flags = visible ? MessageFlags.IsComponentsV2 : MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
 
     await interaction.deferReply({ flags: visible ? undefined : MessageFlags.Ephemeral });
 
     if (sub === 'level') {
       const name = interaction.options.getString('name');
-
       const data = await fetchJson(`https://gdbrowser.com/api/search/${encodeURIComponent(name)}?count=5`).catch(() => null);
 
       if (!data || !data.length) {
@@ -73,22 +60,35 @@ module.exports = {
 
       const components = [];
 
-      for (const level of data.slice(0, 5)) {
-        const diff = level.difficulty || 'N/A';
-        const isDemon = level.isDemon;
-        const diffLabel = isDemon ? (level.demonDifficulty || 'Demon') : diff;
+      for (const level of data.slice(0, 3)) {
+        const diffLabel = level.isDemon ? (level.demonDifficulty || 'Demon') : (level.difficulty || 'N/A');
+        const thumbUrl = `https://gdbrowser.com/gdlevelimage/${level.id}`;
+
+        const badges = [
+          level.isRated ? '✅ Rated' : '',
+          level.featured ? '⭐ Featured' : '',
+          level.epic ? '🔥 Epic' : '',
+          level.legendary ? '🌟 Legendary' : '',
+        ].filter(Boolean).join(' • ');
 
         const container = new ContainerBuilder()
           .setAccentColor(0xff6600)
+          .addMediaGalleryComponents(
+            new MediaGalleryBuilder().addItems(
+              new MediaGalleryItemBuilder().setURL(thumbUrl)
+            )
+          )
           .addTextDisplayComponents(new TextDisplayBuilder().setContent(
             `### ${diffEmoji(diffLabel)} ${level.name}\n` +
-            `👤 **By:** ${level.author || 'Unknown'}\n` +
-            `🆔 **ID:** \`${level.id}\`\n` +
-            `⭐ **Stars:** ${level.stars || 0} • 💎 **Diamonds:** ${level.diamonds || 0}\n` +
+            `👤 **By:** ${level.author || 'Unknown'} • 🆔 \`${level.id}\``
+          ))
+          .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+            `⭐ **Stars:** ${level.stars || 0} • 💎 **Diamonds:** ${level.diamonds || 0} • 🎯 **${diffLabel}**\n` +
             `👍 **Likes:** ${formatNum(level.likes)} • 🔽 **Downloads:** ${formatNum(level.downloads)}\n` +
-            `🎯 **Difficulty:** ${diffLabel}${level.isRated ? ' • ✅ Rated' : ''}${level.featured ? ' • ⭐ Featured' : ''}${level.epic ? ' • 🔥 Epic' : ''}\n` +
-            `🎵 **Song:** ${level.songName || 'N/A'}${level.songAuthor ? ` — ${level.songAuthor}` : ''}\n` +
-            (level.description ? `📝 ${level.description}` : '')
+            `🎵 **Song:** ${level.songName || 'N/A'}${level.songAuthor ? ` — ${level.songAuthor}` : ''}` +
+            (badges ? `\n${badges}` : '') +
+            (level.description ? `\n📝 ${level.description}` : '')
           ))
           .addActionRowComponents(
             new ActionRowBuilder().addComponents(
@@ -108,33 +108,36 @@ module.exports = {
 
     if (sub === 'profile') {
       const username = interaction.options.getString('username');
-
       const data = await fetchJson(`https://gdbrowser.com/api/profile/${encodeURIComponent(username)}`).catch(() => null);
 
       if (!data || data.error) {
         return interaction.editReply({ content: `${emoji.error} Player \`${username}\` not found.` });
       }
 
-      const rankText = data.globalRank
-        ? `${RANK_EMOJI[data.globalRank] || '🏅'} **#${formatNum(data.globalRank)}**`
-        : 'Unranked';
+      const rankText = data.globalRank ? `🏅 **#${formatNum(data.globalRank)}**` : 'Unranked';
+      const iconUrl = `https://gdbrowser.com/icon/${encodeURIComponent(data.username)}?form=cube&outline=1`;
 
       const container = new ContainerBuilder()
         .setAccentColor(0xff6600)
+        .addMediaGalleryComponents(
+          new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL(iconUrl)
+          )
+        )
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### 👤 ${data.username}`))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           `🌍 **Global Rank:** ${rankText}\n` +
-          `⭐ **Stars:** ${formatNum(data.stars)}\n` +
+          `⭐ **Stars:** ${formatNum(data.stars)} • 🌙 **Moons:** ${formatNum(data.moons)}\n` +
           `💎 **Diamonds:** ${formatNum(data.diamonds)}\n` +
           `😈 **Demons:** ${formatNum(data.demons)}\n` +
-          `🪙 **Coins:** ${formatNum(data.coins)} (User) • ${formatNum(data.userCoins)} (Secret)\n` +
+          `🪙 **Coins:** ${formatNum(data.coins)} normal • ${formatNum(data.userCoins)} user\n` +
           `🎨 **Creator Points:** ${formatNum(data.cp)}\n` +
-          `🏆 **Mod Level:** ${data.moderator === 2 ? 'Elder Mod 🔶' : data.moderator === 1 ? 'Mod 🔷' : 'None'}`
+          `🛡️ **Mod:** ${data.moderator === 2 ? 'Elder Mod 🔶' : data.moderator === 1 ? 'Mod 🔷' : 'None'}`
         ))
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-          `🐦 **Twitter/X:** ${data.twitter ? `[@${data.twitter}](https://twitter.com/${data.twitter})` : 'N/A'}\n` +
+          `🐦 **Twitter:** ${data.twitter ? `[@${data.twitter}](https://twitter.com/${data.twitter})` : 'N/A'}\n` +
           `📺 **YouTube:** ${data.youtube ? `[Link](https://youtube.com/channel/${data.youtube})` : 'N/A'}\n` +
           `🎮 **Twitch:** ${data.twitch ? `[${data.twitch}](https://twitch.tv/${data.twitch})` : 'N/A'}`
         ))
